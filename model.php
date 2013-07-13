@@ -83,26 +83,28 @@ abstract class Model implements JSONObject
 	
 	public function toArray($case = "camel")
 	{
-		$properties = $this->_buildRequiredColumns();
+		$properties = get_object_vars($this);
 		$array = array();
-		switch($case)
+		
+		foreach($properties as $key => $value)
 		{
-			case "snake":
-				foreach($properties as $key => $value)
-					$array[NameFormatter::isSnakeCase($key) ? $key : NameFormatter::isSnakeCase($key)] = $value;
-			break;
-			case "mixed":
-				foreach($properties as $key => $value)
-				{
-					$array[NameFormatter::isSnakeCase($key) ? $key : NameFormatter::isSnakeCase($key)] = $value;
+			if($key[0] == "_") continue;
+
+			switch($case)
+			{
+				case "snake":
+					$array[NameFormatter::isSnakeCase($key) ? $key : NameFormatter::toSnakeCase($key)] = $value;
+				break;
+				case "mixed":
+					$array[NameFormatter::isSnakeCase($key) ? $key : NameFormatter::toSnakeCase($key)] = $value;
 					$array[NameFormatter::isCamelCase($key) ? $key : NameFormatter::toCamelCase($key)] = $value;
-				}
-			break;
-			default:
-				foreach($properties as $key => $value)
+				break;
+				default:
 					$array[NameFormatter::isCamelCase($key) ? $key : NameFormatter::toCamelCase($key)] = $value;
-			break;
+				break;
+			}
 		}
+
 		return $array;
 	}
 	
@@ -115,7 +117,7 @@ abstract class Model implements JSONObject
 	{
 		$items = array();
 		foreach($array as $row)
-			$childItems[] = new $Class($row);
+			$items[] = new $Class($row);
 		return $items;
 	}
 	

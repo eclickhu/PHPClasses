@@ -18,11 +18,12 @@ class HttpClient
 	
 	public function send()
 	{
+		$method = strtoupper($this->method);
 		$httpParams = array
 		(
     		'http' => array
 			(
-      			'method' => $this->method,
+      			'method' => $method,
       			'ignore_errors' => true
 			)
     	);
@@ -30,14 +31,14 @@ class HttpClient
 		if ($this->params && is_array($this->params)) 
 		{
 			$paramsStr = http_build_query($this->params);
-			if ($this->method == 'POST') 
+			if ($method == 'POST') 
 			  	$httpParams['http']['content'] = $paramsStr;
 			else
 			  	$this->url .= '?' . $paramsStr;
 		}
 		
 		$context = stream_context_create($httpParams);
-		$fHandle = fopen($this->url, 'rb', false, $context);
+		$fHandle = @fopen($this->url, 'rb', false, $context);
 	
 		if ($fHandle)
 		{
@@ -47,16 +48,26 @@ class HttpClient
 		
 		switch (strtoupper($this->format))
 		{
-    		case 'json':
-      			$this->response = json_decode($this->rawResponse);
+    		case 'JSON':
+      			$this->response = json_decode($this->rawResponse, true);
 			break;
-			case 'xml':
+			case 'XML':
 				$this->response = simplexml_load_string($this->rawResponse);
 			break;
 			default:
 				$this->response = $this->rawResponse;
 			break;
      	}
+	}
+	
+	public static function request($url, $params = array(), $method = "GET", $format="JSON")
+	{
+		$request = new HttpClient($url);
+		$request->params = $params;
+		$request->method = $method;
+		$request->format = $format;
+		$request->send();
+		return $request->response;
 	}
 }
 ?>
